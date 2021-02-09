@@ -12,6 +12,16 @@
       command: rpm-ostree status --json
       register: result_commit
 
+    - debug:
+        var: result_commit
+
+    - debug:
+        msg: "{{ result_commit.stdout | from_json | json_query('deployments') }}"
+
+    - name: first install or upgrade
+      set_fact:
+        commit_count: "{{ result_commit.stdout | from_json | json_query('deployments') | length }}"
+
     - name: make a json result
       set_fact:
         deploy_commit: "{{ result_commit.stdout | from_json | json_query('deployments[0].checksum') }}"
@@ -194,6 +204,28 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: commit_count == "2"
+
+    # case: check rt kernel installed after upgrade
+    - name: check installed package
+      command: uname -r
+      register: result_kernel
+
+    - name: check rt kernel installed
+      block:
+        - assert:
+            that:
+              - "'rt' in result_kernel.stdout"
+            fail_msg: "rt kernel not installed, ostree upgrade might be failed"
+            success_msg: "rt kernel installed in ostree upgrade"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: commit_count == "1"
 
     - name: save installed package to log file
       copy:
@@ -236,6 +268,7 @@
     - name: check dmesg error and fail log
       shell: dmesg --notime | grep -i "error\|fail"
       register: result_dmesg_error
+      ignore_errors: yes
 
     - name: no more error or failed log
       block:
@@ -252,7 +285,9 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: ansible_facts['distribution'] == "RedHat"
+      when:
+        - ansible_facts['distribution'] == "RedHat"
+        - commit_count == "2"
 
     - name: no more error or failed log
       block:

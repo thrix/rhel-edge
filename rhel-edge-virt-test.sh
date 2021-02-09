@@ -1,5 +1,21 @@
 #!/bin/bash
-set -euo pipefail
+set -euxo pipefail
+
+# work with mock osbuild-composer repo
+if [ $# -eq 1 ]; then
+    commit_sha=$1
+fi
+
+if [ ! -z "${commit_sha}" ]; then
+    sudo tee "/etc/yum.repos.d/osbuild-composer.repo" > /dev/null << EOF
+[osbuild-composer]
+name=osbuild-composer ${commit_sha}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/rhel-8.4/x86_64/${commit_sha}
+enabled=1
+gpgcheck=0
+priority=5
+EOF
+fi
 
 # Get OS data.
 source /etc/os-release
@@ -258,6 +274,8 @@ groups = []
 [[packages]]
 name = "python36"
 version = "*"
+[customizations.kernel]
+name = "kernel-rt"
 EOF
 
 # Build installation image.
@@ -373,6 +391,25 @@ done
 # Check image installation result
 check_result
 
+# Get ostree commit value.
+greenprint "Get ostree image commit value"
+INSTALL_HASH=$(jq -r '."ostree-commit"' < "${HTTPD_PATH}"/compose.json)
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${GUEST_ADDRESS}
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${INSTALL_HASH}" check_ostree.yml || RESULTS=0
+# check_result
+
 ##################################################
 ##
 ## ostree image/commit upgrade
@@ -448,15 +485,15 @@ done
 check_result
 
 # Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${GUEST_ADDRESS}
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-EOF
+# sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+# [ostree_guest]
+# ${GUEST_ADDRESS}
+# [ostree_guest:vars]
+# ansible_python_interpreter=/usr/bin/python3
+# ansible_user=admin
+# ansible_private_key_file=${SSH_KEY}
+# ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+# EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" check_ostree.yml || RESULTS=0
