@@ -159,7 +159,8 @@ done
 greenprint "📝 Update grub.cfg to work with HTTP boot"
 sudo tee -a "${GRUB_CFG}" > /dev/null << EOF
 menuentry 'Install Red Hat Enterprise Linux for Edge 8.4' --class fedora --class gnu-linux --class gnu --class os {
-        linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg quiet
+        #linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg quiet
+        linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg inst.text console=ttyS0,115200 inst.loglevel=debug initrdefi /httpboot/images/pxeboot/initrd.img
         initrdefi /httpboot/images/pxeboot/initrd.img
 }
 EOF
@@ -398,8 +399,8 @@ sudo virt-install  --name="${IMAGE_KEY}"\
                    --pxe \
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                    --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
+                   #--noautoconsole \
+                   #--wait=-1 \
                    --noreboot
 
 # Start VM.
