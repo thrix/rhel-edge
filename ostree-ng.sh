@@ -148,7 +148,8 @@ PROD_REPO_URL=http://192.168.100.1/repo/
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}/repo/"
-QUAY_REPO_URL="docker://quay.io/rhel-edge/edge-containers"
+#QUAY_REPO_URL="docker://quay.io/rhel-edge/edge-containers"
+QUAY_REPO_URL="quay.io/rhel-edge/edge-containers"
 QUAY_REPO_TAG=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
 
 # Set up temporary files.
@@ -359,12 +360,15 @@ sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create -
 # Deal with rhel-edge container
 greenprint "Uploading image to quay.io"
 IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
-skopeo copy --dest-creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+#skopeo copy --dest-creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 # Clear image file
-sudo rm -f "$IMAGE_FILENAME"
+#sudo rm -f "$IMAGE_FILENAME"
 
 greenprint "Downloading image from quay.io"
-sudo podman pull "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+#sudo podman pull "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+CTR_ID=$(sudo podman pull "oci-archive:${IMAGE_FILENAME}")
+sudo podman tag "${CTR_ID}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+sudo rm -f "$IMAGE_FILENAME"
 sudo podman images
 
 greenprint "🗜 Running the image"
