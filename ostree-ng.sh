@@ -52,13 +52,19 @@ CI MACHINE SPECS
 EOF
 echo -e "\033[0m"
 
+# CentOS Stream Workaround
+if grep -r CentOS /etc/redhat-release; then
+    sudo cp files/rhel-8-4-0-os-release /etc/os-release
+    sudo cp files/rhel-8-4-0-rh-release /etc/redhat-release
+fi
+
 # Get OS data.
 source /etc/os-release
 
 # Customize repository
 sudo mkdir -p /etc/osbuild-composer/repositories
-sudo cp files/rhel-8-4-0.json /etc/osbuild-composer/repositories/rhel-8-beta.json
-sudo ln -sf /etc/osbuild-composer/repositories/rhel-8-beta.json /etc/osbuild-composer/repositories/rhel-8.json
+sudo cp /usr/share/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/
+sudo ln -sv /etc/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/rhel-8.json
 
 # Colorful output.
 function greenprint {

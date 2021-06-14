@@ -27,6 +27,12 @@ CI MACHINE SPECS
 EOF
 echo -e "\033[0m"
 
+# CentOS Stream Workaround
+if grep -r CentOS /etc/redhat-release; then
+    sudo cp files/rhel-8-4-0-os-release /etc/os-release
+    sudo cp files/rhel-8-4-0-rh-release /etc/redhat-release
+fi
+
 # Get OS data.
 source /etc/os-release
 
@@ -51,10 +57,15 @@ case "${ID}-${VERSION_ID}" in
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
-        BOOT_LOCATION="http://download-node-02.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/x86_64/os/"
-        CUT_DIRS=8
-        sudo cp files/rhel-8-4-0.json /etc/osbuild-composer/repositories/rhel-8-beta.json
-        sudo ln -sf /etc/osbuild-composer/repositories/rhel-8-beta.json /etc/osbuild-composer/repositories/rhel-8.json;;
+        # Apply CentOS Stream Workarounds
+        #BOOT_LOCATION="http://download-node-02.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
+        #CUT_DIRS=8
+        CUT_DIRS=5
+        #sudo cp files/rhel-8-4-0.json /etc/osbuild-composer/repositories/rhel-8-beta.json
+        #sudo ln -sf /etc/osbuild-composer/repositories/rhel-8-beta.json /etc/osbuild-composer/repositories/rhel-8.json;;
+        sudo cp /usr/share/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/
+        sudo ln -sv /etc/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/rhel-8.json;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
@@ -158,7 +169,7 @@ done
 # Update grub.cfg to work with HTTP boot
 greenprint "📝 Update grub.cfg to work with HTTP boot"
 sudo tee -a "${GRUB_CFG}" > /dev/null << EOF
-menuentry 'Install Red Hat Enterprise Linux for Edge 8.4' --class fedora --class gnu-linux --class gnu --class os {
+menuentry 'Install CentOS Linux 8' --class fedora --class gnu-linux --class gnu --class os {
         linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg inst.text console=ttyS0,115200
         initrdefi /httpboot/images/pxeboot/initrd.img
 }
