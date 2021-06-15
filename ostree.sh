@@ -399,15 +399,16 @@ STOPHERE
 
 # Install ostree image via anaconda.
 greenprint "Install ostree image via anaconda"
-sudo virt-install  --name="${IMAGE_KEY}"\
+sudo virt-install  --name="${IMAGE_KEY}" \
+                   --initrd-inject=/var/www/html/ks.cfg \
+                   --location="${BOOT_LOCATION}" \
+                   --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --pxe \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/AAVMF/AAVMF_VARS.fd,loader_secure=no \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
