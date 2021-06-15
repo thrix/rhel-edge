@@ -163,7 +163,7 @@ sudo mkdir -p "${HTTPD_PATH}/httpboot"
 REQUIRED_FOLDERS=( "EFI" "images" "isolinux" )
 for i in "${REQUIRED_FOLDERS[@]}"
 do
-    sudo wget -r --no-parent -nH --cut-dirs="$CUT_DIRS" --reject "index.html*" --reject "boot.iso" "${BOOT_LOCATION}${i}/" -P "${HTTPD_PATH}/httpboot/"
+    sudo wget -nv -r --no-parent -nH --cut-dirs="$CUT_DIRS" --reject "index.html*" --reject "boot.iso" "${BOOT_LOCATION}${i}/" -P "${HTTPD_PATH}/httpboot/"
 done
 
 # Update grub.cfg to work with HTTP boot
