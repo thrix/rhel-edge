@@ -156,31 +156,31 @@ HTTPD_PATH="/var/www/html"
 KS_FILE=${HTTPD_PATH}/ks.cfg
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
-GRUB_CFG=${HTTPD_PATH}/httpboot/EFI/BOOT/grub.cfg
+# GRUB_CFG=${HTTPD_PATH}/httpboot/EFI/BOOT/grub.cfg
 
-# Download HTTP boot required files
-greenprint "📥 Download HTTP boot required files"
-sudo mkdir -p "${HTTPD_PATH}/httpboot"
-REQUIRED_FOLDERS=( "EFI" "images" "isolinux" )
-for i in "${REQUIRED_FOLDERS[@]}"
-do
-    sudo wget -nv -r --no-parent -nH --cut-dirs="$CUT_DIRS" --reject "index.html*" --reject "boot.iso" "${BOOT_LOCATION}${i}/" -P "${HTTPD_PATH}/httpboot/"
-done
+# # Download HTTP boot required files
+# greenprint "📥 Download HTTP boot required files"
+# sudo mkdir -p "${HTTPD_PATH}/httpboot"
+# REQUIRED_FOLDERS=( "EFI" "images" )
+# for i in "${REQUIRED_FOLDERS[@]}"
+# do
+#     sudo wget -nv -r --no-parent -nH --cut-dirs="$CUT_DIRS" --reject "index.html*" --reject "boot.iso" "${BOOT_LOCATION}${i}/" -P "${HTTPD_PATH}/httpboot/"
+# done
 
-# Update grub.cfg to work with HTTP boot
-greenprint "📝 Update grub.cfg to work with HTTP boot"
-sudo tee -a "${GRUB_CFG}" > /dev/null << EOF
-menuentry 'Install CentOS Linux 8' --class fedora --class gnu-linux --class gnu --class os {
-        linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg inst.text console=ttyS0,115200
-        initrdefi /httpboot/images/pxeboot/initrd.img
-}
-EOF
-sudo sed -i 's/default="1"/default="3"/' "${GRUB_CFG}"
-sudo sed -i 's/timeout=60/timeout=10/' "${GRUB_CFG}"
+# # Update grub.cfg to work with HTTP boot
+# greenprint "📝 Update grub.cfg to work with HTTP boot"
+# sudo tee -a "${GRUB_CFG}" > /dev/null << EOF
+# menuentry 'Install CentOS Linux 8' --class fedora --class gnu-linux --class gnu --class os {
+#         linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg inst.text console=ttyS0,115200
+#         initrdefi /httpboot/images/pxeboot/initrd.img
+# }
+# EOF
+# sudo sed -i 's/default="1"/default="3"/' "${GRUB_CFG}"
+# sudo sed -i 's/timeout=60/timeout=10/' "${GRUB_CFG}"
 
-# Start httpd to serve ostree repo and HTTP boot server
-greenprint "🚀 Starting httpd daemon"
-sudo systemctl start httpd
+# # Start httpd to serve ostree repo and HTTP boot server
+# greenprint "🚀 Starting httpd daemon"
+# sudo systemctl start httpd
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
