@@ -250,7 +250,7 @@ build_image() {
         fi
 
         # Wait 30 seconds and try again.
-        sleep 5
+        sleep 30
     done
 
     # Capture the compose logs from osbuild.
