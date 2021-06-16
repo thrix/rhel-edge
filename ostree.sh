@@ -415,6 +415,10 @@ sudo virt-install  --name="${IMAGE_KEY}" \
                    --wait=-1 \
                    --noreboot
 
+# We finish here for the demo
+greenprint "🥳 Image was installed \o/ in ${LIBVIRT_IMAGE_PATH}"
+exit
+
 # Start VM.
 greenprint "Start VM"
 sudo virsh start "${IMAGE_KEY}"
